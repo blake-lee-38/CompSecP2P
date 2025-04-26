@@ -3,6 +3,7 @@ from tkinter import scrolledtext
 import socket
 import threading
 from crypto_utils import *
+import tkinter.simpledialog as simpledialog
 
 class SecureChatApp:
     def __init__(self, master, is_server=False):
@@ -10,7 +11,8 @@ class SecureChatApp:
         self.master.title("Secure P2P Messenger")
         self.is_server = is_server
         self.conn = None
-
+        self.alive = True
+        self.master.protocol("WM_DELETE_WINDOW", self.on_close)
         self.text_area = scrolledtext.ScrolledText(master, wrap=tk.WORD, height=20, width=50)
         self.text_area.pack()
         self.text_area.config(state=tk.DISABLED)
@@ -20,11 +22,24 @@ class SecureChatApp:
         self.send_btn = tk.Button(master, text="Send", command=self.send_message)
         self.send_btn.pack(side=tk.RIGHT, padx=5, pady=5)
 
-        self.password = "password123"
+        self.password = simpledialog.askstring("Password", "Enter shared password:", show="*")
+        if not self.password:
+            self.master.destroy()
+            return
         self.salt = b'secure_salt_1234'
         self.key = derive_key(self.password, self.salt)
 
         threading.Thread(target=self.network_thread).start()
+
+    def on_close(self):
+        self.alive = False
+        if self.conn:
+            try:
+                self.conn.shutdown(socket.SHUT_RDWR)
+                self.conn.close()
+            except:
+                pass
+        self.master.destroy()
 
     def append_text(self, msg):
         self.text_area.config(state=tk.NORMAL)
@@ -45,12 +60,15 @@ class SecureChatApp:
             self.conn.connect(("localhost", 5000))
             self.append_text("Connected to server.")
 
-        while True:
+        self.conn.settimeout(1.0)
+        while self.alive:
             try:
                 data = self.conn.recv(4096).decode()
                 if data:
                     decrypted = decrypt_message(data, self.key)
                     self.append_text(f"[Friend] {decrypted} (Encrypted: {data})")
+            except socket.timeout:
+                continue
             except:
                 break
 
