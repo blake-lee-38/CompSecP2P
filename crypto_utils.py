@@ -6,6 +6,7 @@ import base64
 def derive_key(password, salt, key_len=32):
     return PBKDF2(password, salt, dkLen=key_len, count=100000)
 
+# Encrypts using AES CBC mode and the shared key from the password and salt
 def encrypt_message(message, key):
     iv = get_random_bytes(16)
     cipher = AES.new(key, AES.MODE_CBC, iv)
