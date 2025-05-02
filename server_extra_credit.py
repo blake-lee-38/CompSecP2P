@@ -1,10 +1,12 @@
 import socket
 import threading
-from crypto_utils import *
+from crypto_utils_extra_credit import *
 import rsa
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 import random
+
+from crypto_utils_extra_credit import encrypt_message, decrypt_message
 
 def handle_client(conn, key):
     while True:
@@ -30,10 +32,20 @@ def main():
 
     # send public key
     conn.send(pubkey.save_pkcs1(format='PEM'))
+    signature = rsa.sign(b"This is server", privkey, 'SHA-256')
+    conn.send(signature)
 
     client_public_key =  conn.recv(4096)
+    client_signature = conn.recv(4096)
     client_public_key_formatted = rsa.PublicKey.load_pkcs1(client_public_key, format='PEM')
 
+    try:
+        rsa.verify(b"This is client", client_signature, client_public_key_formatted)
+        print("Client signature verified.")
+    except rsa.VerificationError:
+        print("Client signature verification failed.")
+        conn.close()
+        return
     random_number = get_random_bytes(32)  
     print(f" AES key: {random_number}")
     random_number_encrypted = rsa.encrypt(random_number, client_public_key_formatted)
