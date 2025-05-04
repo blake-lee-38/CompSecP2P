@@ -30,6 +30,7 @@ class SecureChatApp:
         self.key = derive_key(self.password, self.salt)
 
         threading.Thread(target=self.network_thread).start()
+        threading.Thread(target=self.periodic_key_update, daemon=True).start()
 
     def on_close(self):
         self.alive = False
@@ -79,6 +80,11 @@ class SecureChatApp:
             self.conn.send(enc.encode())
             self.append_text(f"[You] {msg} (Encrypted: {enc})")
             self.entry.delete(0, tk.END)
+    
+    def periodic_key_update(self, interval=300):
+        while True:
+            time.sleep(interval)
+            self.key = derive_key(self.password)
 
 if __name__ == "__main__":
     import sys

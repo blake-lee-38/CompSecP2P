@@ -1,6 +1,7 @@
 import socket
 import threading
 from crypto_utils import *
+import threading
 
 def handle_client(conn, key):
     while True:
@@ -16,6 +17,14 @@ def main():
     password = input("Enter shared password: ")
     salt = b'secure_salt_1234'
     key = derive_key(password, salt)
+
+    def periodic_key_updater():
+        global key
+        while True:
+            time.sleep(300)
+            key = derive_key(password)
+
+    threading.Thread(target=periodic_key_updater, daemon=True).start()
 
     sock = socket.socket()
     sock.bind(('0.0.0.0', 5000))
