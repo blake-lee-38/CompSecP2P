@@ -3,19 +3,19 @@ import threading
 from crypto_utils import *
 import threading
 
-def handle_client(conn, key):
+def recieve_from_client(conn, key):
     while True:
         try:
             data = conn.recv(4096).decode()
             if not data: break
-            print(f"\n[Received Encrypted]: {data}")
-            print(f"[Decrypted]: {decrypt_message(data, key)}")
+            print(f"\n Received Encrypted: {data}")
+            print(f"Decrypted: {decrypt_message(data, key)}")
         except:
             break
 
 def main():
     password = input("Enter shared password: ")
-    salt = b'secure_salt_1234'
+    salt = b'this_is_our_salt'
     key = derive_key(password, salt)
 
     def periodic_key_updater():
@@ -29,16 +29,16 @@ def main():
     sock = socket.socket()
     sock.bind(('0.0.0.0', 5000))
     sock.listen(1)
-    print("[Waiting for connection...]")
+    print("Waiting for client")
     conn, addr = sock.accept()
-    print(f"[Connected to]: {addr}")
+    print(f"Connected to: {addr}")
 
-    threading.Thread(target=handle_client, args=(conn, key)).start()
+    threading.Thread(target=recieve_from_client, args=(conn, key)).start()
 
     while True:
-        msg = input("You: ")
-        enc = encrypt_message(msg, key)
-        conn.send(enc.encode())
+        message = input("You: ")
+        encrypted_message = encrypt_message(message, key)
+        conn.send(encrypted_message.encode())
 
 if __name__ == "__main__":
     main()
