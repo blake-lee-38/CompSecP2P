@@ -85,7 +85,6 @@ class SecureChatApp:
         while True:
             time.sleep(interval)
             self.key = derive_key(self.password)
-            self.append_text(f"[System] Session key updated. {self.key}")
 
 if __name__ == "__main__":
     import sys

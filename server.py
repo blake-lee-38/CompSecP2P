@@ -23,7 +23,6 @@ def main():
         while True:
             time.sleep(300)
             key = derive_key(password)
-            print(f"[System] Session key updated. {key}")
 
     threading.Thread(target=periodic_key_updater, daemon=True).start()
 
